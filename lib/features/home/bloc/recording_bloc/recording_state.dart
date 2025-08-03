@@ -21,6 +21,8 @@ class RecordingPermissionFailure extends RecordingState {
 
 class RecordingInProgress extends RecordingState {}
 
+class RecordingSaving extends RecordingState {}
+
 class RecordingSuccess extends RecordingState {
   final RecordingResult result;
   const RecordingSuccess(this.result);

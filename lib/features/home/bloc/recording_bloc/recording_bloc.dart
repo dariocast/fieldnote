@@ -72,6 +72,7 @@ class RecordingBloc extends Bloc<RecordingEvent, RecordingState> {
     Emitter<RecordingState> emit,
   ) async {
     try {
+      emit(RecordingSaving());
       final RecordingResult? result =
           await _recordingRepository.stopRecording();
       if (result != null) {

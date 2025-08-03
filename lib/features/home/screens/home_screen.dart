@@ -141,6 +141,9 @@ class HomeScreen extends StatelessWidget {
                 onTap: () => context.read<RecordingBloc>().add(StopRecording()),
               );
             }
+            if (state is RecordingSaving) {
+              return const CircularProgressIndicator();
+            }
             return _RecordButton(
               isRecording: false,
               onTap: () => context.read<RecordingBloc>().add(StartRecording()),
@@ -153,7 +156,6 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _RecordButton extends StatelessWidget {
-  // ... This widget remains unchanged from the previous task
   final bool isRecording;
   final VoidCallback onTap;
 
