@@ -1,4 +1,4 @@
-package com.example.fieldnote
+package xyz.dariocast.fieldnote
 
 import io.flutter.embedding.android.FlutterActivity
 

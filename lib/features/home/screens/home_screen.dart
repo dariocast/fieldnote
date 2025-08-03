@@ -1,4 +1,5 @@
 import 'package:fieldnote/features/home/bloc/recording_bloc/recording_bloc.dart';
+import 'package:fieldnote/shared/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -7,88 +8,122 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check permissions when the screen is first built
     context.read<RecordingBloc>().add(CheckPermissions());
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your Notes'),
-      ),
-      body: BlocListener<RecordingBloc, RecordingState>(
-        listener: (context, state) {
-          if (state is RecordingSuccess) {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                const SnackBar(content: Text('Recording saved!')),
-              );
-          } else if (state is RecordingFailure) {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                SnackBar(
-                    content: Text('Error: ${state.errorMessage}'),
-                    backgroundColor: Colors.red),
-              );
-          }
-        },
-        child: Center(
-          child: BlocBuilder<RecordingBloc, RecordingState>(
-            builder: (context, state) {
-              if (state is PermissionInitial) {
-                return const CircularProgressIndicator();
-              }
-              if (state is PermissionFailure) {
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(state.errorMessage, textAlign: TextAlign.center),
-                );
-              }
-              if (state is RecordingInProgress) {
-                return _buildRecordingUI(context);
-              }
-              // Default state: PermissionGranted or after a recording is finished.
-              return _buildIdleUI(context);
-            },
-          ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // TODO: Replace with the actual note list in Sprint 2
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Text(
+                    'Your recorded notes will appear here. Tap the button below to capture your first thought.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ),
+            ),
+            _buildInteractionArea(),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildIdleUI(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text('Tap to start recording'),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: () => context.read<RecordingBloc>().add(StartRecording()),
-          style: ElevatedButton.styleFrom(
-            shape: const CircleBorder(),
-            padding: const EdgeInsets.all(24),
-          ),
-          child: const Icon(Icons.mic, size: 48),
+  Widget _buildInteractionArea() {
+    return BlocListener<RecordingBloc, RecordingState>(
+      listener: (context, state) {
+        if (state is RecordingSuccess) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text('Recording saved!'),
+                backgroundColor: AppColors.calmGreen,
+              ),
+            );
+        } else if (state is RecordingFailure) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text('Error: ${state.errorMessage}'),
+                backgroundColor: AppColors.destructiveRed,
+              ),
+            );
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 32.0, top: 16.0),
+        child: BlocBuilder<RecordingBloc, RecordingState>(
+          builder: (context, state) {
+            if (state is PermissionInitial) {
+              return const CircularProgressIndicator();
+            }
+            if (state is PermissionFailure) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(
+                  state.errorMessage,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.destructiveRed),
+                ),
+              );
+            }
+            if (state is RecordingInProgress) {
+              return _RecordButton(
+                isRecording: true,
+                onTap: () => context.read<RecordingBloc>().add(StopRecording()),
+              );
+            }
+            // Default state: PermissionGranted or after a recording is finished.
+            return _RecordButton(
+              isRecording: false,
+              onTap: () => context.read<RecordingBloc>().add(StartRecording()),
+            );
+          },
         ),
-      ],
+      ),
     );
   }
+}
 
-  Widget _buildRecordingUI(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text('Recording...', style: TextStyle(color: Colors.red)),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: () => context.read<RecordingBloc>().add(StopRecording()),
-          style: ElevatedButton.styleFrom(
-            shape: const CircleBorder(),
-            padding: const EdgeInsets.all(24),
-            backgroundColor: Colors.red,
-          ),
-          child: const Icon(Icons.stop, size: 48),
+/// A custom circular record button widget based on the design system.
+class _RecordButton extends StatelessWidget {
+  final bool isRecording;
+  final VoidCallback onTap;
+
+  const _RecordButton({required this.isRecording, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          color: isRecording ? AppColors.destructiveRed : AppColors.accentBlue,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-      ],
+        child: Icon(
+          isRecording ? Icons.stop_rounded : Icons.mic_none_rounded,
+          color: Colors.white,
+          size: 40,
+        ),
+      ),
     );
   }
 }

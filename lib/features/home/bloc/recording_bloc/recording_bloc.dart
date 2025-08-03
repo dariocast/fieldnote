@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:fieldnote/core/repositories/permissions_repository.dart';
 import 'package:fieldnote/core/repositories/recording_repository.dart';
