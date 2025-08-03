@@ -1,4 +1,5 @@
 import 'package:fieldnote/core/repositories/permissions_repository.dart';
+import 'package:fieldnote/core/repositories/recording_repository.dart';
 import 'package:fieldnote/features/home/bloc/recording_bloc/recording_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,19 +20,22 @@ class FieldNoteApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Provide repositories and Blocs to the entire app.
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<PermissionsRepository>(
           create: (context) => PermissionsRepository(),
         ),
-        // TODO: Add DatabaseRepository and RecordingRepository here
+        RepositoryProvider<RecordingRepository>(
+          create: (context) => RecordingRepository(),
+        ),
+        // TODO: Add DatabaseRepository here
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider<RecordingBloc>(
             create: (context) => RecordingBloc(
               permissionsRepository: context.read<PermissionsRepository>(),
+              recordingRepository: context.read<RecordingRepository>(),
             ),
           ),
           // TODO: Add NotesBloc here

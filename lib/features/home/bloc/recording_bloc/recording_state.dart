@@ -7,20 +7,32 @@ abstract class RecordingState extends Equatable {
   List<Object> get props => [];
 }
 
-/// The initial state before any permission check has been made.
 class PermissionInitial extends RecordingState {}
 
-/// State indicating that all required permissions have been granted.
 class PermissionGranted extends RecordingState {}
 
-/// State indicating that one or more required permissions were denied.
 class PermissionFailure extends RecordingState {
   final String errorMessage;
-
   const PermissionFailure(this.errorMessage);
-
   @override
   List<Object> get props => [errorMessage];
 }
 
-/// TODO: Add RecordingInProgress and RecordingSuccess states.
+/// State indicating a recording is currently in progress.
+class RecordingInProgress extends RecordingState {}
+
+/// State indicating a recording has successfully completed and was saved.
+class RecordingSuccess extends RecordingState {
+  final String filePath;
+  const RecordingSuccess(this.filePath);
+  @override
+  List<Object> get props => [filePath];
+}
+
+/// State indicating an error occurred during recording.
+class RecordingFailure extends RecordingState {
+  final String errorMessage;
+  const RecordingFailure(this.errorMessage);
+  @override
+  List<Object> get props => [errorMessage];
+}

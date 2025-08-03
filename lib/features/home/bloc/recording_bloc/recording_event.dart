@@ -7,7 +7,10 @@ abstract class RecordingEvent extends Equatable {
   List<Object> get props => [];
 }
 
-/// Event to trigger the permission check.
 class CheckPermissions extends RecordingEvent {}
 
-/// TODO: Add StartRecording and StopRecording events in the next task.
+/// Event to start a new recording.
+class StartRecording extends RecordingEvent {}
+
+/// Event to stop the current recording.
+class StopRecording extends RecordingEvent {}
