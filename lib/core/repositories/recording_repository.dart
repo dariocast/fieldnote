@@ -37,7 +37,11 @@ class RecordingRepository {
       appDocumentsDir.path,
       'recording_${DateTime.now().millisecondsSinceEpoch}.m4a',
     );
-    const config = RecordConfig(encoder: AudioEncoder.aacHe);
+    const config = RecordConfig(
+      encoder: AudioEncoder.aacLc,
+      sampleRate: 16000,
+      numChannels: 1,
+    );
 
     // Reset transcription state
     _transcription = '';

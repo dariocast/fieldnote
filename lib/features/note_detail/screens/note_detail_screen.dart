@@ -1,5 +1,6 @@
 import 'package:fieldnote/core/models/note.dart';
 import 'package:fieldnote/core/repositories/audio_player_repository.dart';
+import 'package:fieldnote/features/home/bloc/notes_bloc/notes_bloc.dart';
 import 'package:fieldnote/features/note_detail/bloc/audio_player_bloc/audio_player_bloc.dart';
 import 'package:fieldnote/shared/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -35,11 +36,9 @@ class _NoteDetailView extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon:
-                const Icon(Icons.delete_outline, color: AppColors.primaryBlue),
-            onPressed: () {
-              // TODO: Implement delete functionality in Task 3
-            },
+            icon: const Icon(Icons.delete_outline,
+                color: AppColors.destructiveRed),
+            onPressed: () => _showDeleteConfirmationDialog(context, note),
           ),
         ],
       ),
@@ -62,6 +61,43 @@ class _NoteDetailView extends StatelessWidget {
           _AudioPlayerWidget(),
         ],
       ),
+    );
+  }
+
+  Future<void> _showDeleteConfirmationDialog(
+      BuildContext context, Note note) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Note?'),
+          content: const Text(
+              'Are you sure you want to permanently delete this note? This action cannot be undone.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Delete',
+                  style: TextStyle(color: AppColors.destructiveRed)),
+              onPressed: () {
+                // Dispatch the delete event
+                context.read<NotesBloc>().add(
+                      DeleteNote(
+                          id: note.id, audioFilePath: note.audioFilePath),
+                    );
+                // Pop the dialog
+                Navigator.of(dialogContext).pop();
+                // Pop the detail screen to return to the home screen
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

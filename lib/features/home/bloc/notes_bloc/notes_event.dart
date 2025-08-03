@@ -19,8 +19,10 @@ class AddNote extends NotesEvent {
 
 class DeleteNote extends NotesEvent {
   final int id;
-  const DeleteNote(this.id);
+  final String audioFilePath; // Add this property
+
+  const DeleteNote({required this.id, required this.audioFilePath});
 
   @override
-  List<Object> get props => [id];
+  List<Object> get props => [id, audioFilePath];
 }

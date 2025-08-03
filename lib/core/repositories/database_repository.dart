@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:fieldnote/core/models/note.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
@@ -32,10 +33,23 @@ class DatabaseRepository {
     });
   }
 
-  Future<void> deleteNote(int id) async {
+  /// Deletes a note from the database and its associated audio file from storage.
+  Future<void> deleteNote(int id, String audioFilePath) async {
+    // Delete the database record
     await _isar.writeTxn(() async {
       await _isar.notes.delete(id);
     });
+
+    // Delete the audio file
+    try {
+      final file = File(audioFilePath);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (e) {
+      // Log or handle file deletion error if necessary
+      print('Error deleting audio file: $e');
+    }
   }
 
   // In a future sprint, we can add search functionality here.

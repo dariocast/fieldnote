@@ -48,8 +48,8 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     Emitter<NotesState> emit,
   ) async {
     try {
-      await _databaseRepository.deleteNote(event.id);
-      // After deleting, reload the notes
+      await _databaseRepository.deleteNote(event.id, event.audioFilePath);
+      // After deleting, reload the notes to update the UI
       add(LoadNotes());
     } catch (e) {
       // Handle error
