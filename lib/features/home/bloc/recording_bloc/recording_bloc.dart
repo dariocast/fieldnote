@@ -51,8 +51,17 @@ class RecordingBloc extends Bloc<RecordingEvent, RecordingState> {
     Emitter<RecordingState> emit,
   ) async {
     try {
-      await _recordingRepository.startRecording();
-      emit(RecordingInProgress());
+      // Check the result of startRecording
+      final bool didStart = await _recordingRepository.startRecording();
+      if (didStart) {
+        emit(RecordingInProgress());
+      } else {
+        // If it failed to start, emit a failure state immediately.
+        emit(const RecordingFailure(
+            'Failed to start recording. Please try again.'));
+        // Go back to the ready state so the user can try again.
+        emit(RecordingReady());
+      }
     } catch (e) {
       emit(const RecordingFailure('Failed to start recording.'));
     }

@@ -7,9 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fieldnote/features/home/screens/home_screen.dart';
 import 'package:fieldnote/shared/theme/app_theme.dart';
+import 'package:isar/isar.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Isar.initializeIsarCore(download: true);
 
   // Initialize the database repository
   final databaseRepository = await DatabaseRepository.init();

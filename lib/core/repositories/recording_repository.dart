@@ -31,13 +31,13 @@ class RecordingRepository {
   }
 
   /// Starts both audio recording to a file and live transcription.
-  Future<void> startRecording() async {
+  Future<bool> startRecording() async {
     final Directory appDocumentsDir = await getApplicationDocumentsDirectory();
     final String filePath = p.join(
       appDocumentsDir.path,
       'recording_${DateTime.now().millisecondsSinceEpoch}.m4a',
     );
-    const config = RecordConfig(encoder: AudioEncoder.aacLc);
+    const config = RecordConfig(encoder: AudioEncoder.aacHe);
 
     // Reset transcription state
     _transcription = '';
@@ -48,13 +48,16 @@ class RecordingRepository {
       onResult: (result) {
         _transcription = result.recognizedWords;
         if (result.finalResult) {
-          _transcriptionCompleter.complete(_transcription);
+          if (!_transcriptionCompleter.isCompleted) {
+            _transcriptionCompleter.complete(_transcription);
+          }
         }
       },
     );
 
     // Start recording to file
     await _audioRecorder.start(config, path: filePath);
+    return await _audioRecorder.isRecording();
   }
 
   /// Stops both recording and transcription, and returns the combined result.
@@ -63,7 +66,11 @@ class RecordingRepository {
       final String? path = await _audioRecorder.stop();
       await _speechToText.stop();
 
-      // Wait for the final transcription result
+      // Ensure the completer finishes even if no final result was received
+      if (!_transcriptionCompleter.isCompleted) {
+        _transcriptionCompleter.complete(_transcription);
+      }
+
       final String finalTranscription = await _transcriptionCompleter.future;
 
       if (path != null) {
