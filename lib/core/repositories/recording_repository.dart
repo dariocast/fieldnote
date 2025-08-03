@@ -66,24 +66,28 @@ class RecordingRepository {
 
   /// Stops both recording and transcription, and returns the combined result.
   Future<RecordingResult?> stopRecording() async {
-    if (await _audioRecorder.isRecording()) {
-      final String? path = await _audioRecorder.stop();
-      await _speechToText.stop();
+    if (!await _audioRecorder.isRecording()) return null;
 
-      // Ensure the completer finishes even if no final result was received
-      if (!_transcriptionCompleter.isCompleted) {
-        _transcriptionCompleter.complete(_transcription);
-      }
+    // First, stop the audio source
+    final String? path = await _audioRecorder.stop();
 
-      final String finalTranscription = await _transcriptionCompleter.future;
+    // Now, give the speech recognizer a moment to finalize
+    await _speechToText.stop();
 
-      if (path != null) {
-        return RecordingResult(
-          filePath: path,
-          transcription: finalTranscription,
-        );
-      }
+    // Wait for the completer to get the final result, with a timeout
+    final String finalTranscription = await _transcriptionCompleter.future
+        .timeout(const Duration(seconds: 2), onTimeout: () {
+      // If it times out, return the last known partial transcription
+      return _transcription;
+    });
+
+    if (path != null) {
+      return RecordingResult(
+        filePath: path,
+        transcription: finalTranscription,
+      );
     }
+
     return null;
   }
 
