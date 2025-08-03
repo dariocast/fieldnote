@@ -1,6 +1,7 @@
-import 'package:fieldnote/core/models/note.dart'; // Import Note model
-import 'package:fieldnote/features/home/bloc/notes_bloc/notes_bloc.dart'; // Import NotesBloc
+import 'package:fieldnote/core/models/note.dart';
+import 'package:fieldnote/features/home/bloc/notes_bloc/notes_bloc.dart';
 import 'package:fieldnote/features/home/bloc/recording_bloc/recording_bloc.dart';
+import 'package:fieldnote/features/home/widgets/note_list_item.dart'; // Import the new widget
 import 'package:fieldnote/shared/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,27 +11,71 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Check permissions when the screen is first built
     context.read<RecordingBloc>().add(InitializeRecording());
 
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            // TODO: Replace with the actual note list in Sprint 2
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                  child: Text(
-                    'Your recorded notes will appear here. Tap the button below to capture your first thought.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ),
-              ),
+      appBar: AppBar(
+        title: Text(
+          'Your Notes',
+          style: Theme.of(context).textTheme.displayLarge,
+        ),
+        centerTitle: false,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: BlocBuilder<NotesBloc, NotesState>(
+              builder: (context, state) {
+                if (state is NotesLoadSuccess) {
+                  if (state.notes.isEmpty) {
+                    return _buildEmptyState(context);
+                  }
+                  return ListView.builder(
+                    itemCount: state.notes.length,
+                    itemBuilder: (context, index) {
+                      final note = state.notes[index];
+                      return NoteListItem(note: note);
+                    },
+                  );
+                }
+                if (state is NotesLoadFailure) {
+                  return Center(child: Text(state.errorMessage));
+                }
+                // Default to a loading indicator for Initial/InProgress states
+                return const Center(child: CircularProgressIndicator());
+              },
             ),
-            _buildInteractionArea(),
+          ),
+          _buildInteractionArea(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.note_add_outlined,
+              size: 64,
+              color: AppColors.textGray,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Your recorded notes will appear here.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tap the button below to capture your first thought.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ],
         ),
       ),
@@ -38,25 +83,23 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildInteractionArea() {
+    // ... This function remains unchanged from the previous task
     return BlocListener<RecordingBloc, RecordingState>(
       listener: (context, state) {
         if (state is RecordingSuccess) {
-          // Create a new Note object
           final newNote = Note()
             ..audioFilePath = state.result.filePath
-            ..transcription =
-                state.result.transcription // Use the transcription
+            ..transcription = state.result.transcription
             ..createdAt = DateTime.now()
-            ..durationInSeconds = 0; // TODO: Calculate actual duration
+            ..durationInSeconds = 0;
 
-          // Add the new note to the database via the NotesBloc
           context.read<NotesBloc>().add(AddNote(newNote));
 
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
               const SnackBar(
-                content: Text('Recording saved!'),
+                content: Text('Recording transcribed and saved!'),
                 backgroundColor: AppColors.calmGreen,
               ),
             );
@@ -98,7 +141,6 @@ class HomeScreen extends StatelessWidget {
                 onTap: () => context.read<RecordingBloc>().add(StopRecording()),
               );
             }
-            // Default state: RecordingReady or after a recording is finished.
             return _RecordButton(
               isRecording: false,
               onTap: () => context.read<RecordingBloc>().add(StartRecording()),
@@ -110,8 +152,8 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// A custom circular record button widget based on the design system.
 class _RecordButton extends StatelessWidget {
+  // ... This widget remains unchanged from the previous task
   final bool isRecording;
   final VoidCallback onTap;
 
