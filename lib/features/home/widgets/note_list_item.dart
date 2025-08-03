@@ -1,4 +1,5 @@
 import 'package:fieldnote/core/models/note.dart';
+import 'package:fieldnote/features/note_detail/screens/note_detail_screen.dart';
 import 'package:fieldnote/shared/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -12,7 +13,11 @@ class NoteListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        // TODO: Navigate to Note Detail Screen in Sprint 3
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => NoteDetailScreen(note: note),
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
