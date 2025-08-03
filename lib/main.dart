@@ -1,5 +1,7 @@
+import 'package:fieldnote/core/repositories/database_repository.dart';
 import 'package:fieldnote/core/repositories/permissions_repository.dart';
 import 'package:fieldnote/core/repositories/recording_repository.dart';
+import 'package:fieldnote/features/home/bloc/notes_bloc/notes_bloc.dart';
 import 'package:fieldnote/features/home/bloc/recording_bloc/recording_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,26 +11,31 @@ import 'package:fieldnote/shared/theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // TODO: Initialize Isar Database
-  // TODO: Initialize other Repositories
+  // Initialize the database repository
+  final databaseRepository = await DatabaseRepository.init();
 
-  runApp(const FieldNoteApp());
+  runApp(FieldNoteApp(databaseRepository: databaseRepository));
 }
 
 class FieldNoteApp extends StatelessWidget {
-  const FieldNoteApp({super.key});
+  final DatabaseRepository databaseRepository;
+
+  const FieldNoteApp({
+    super.key,
+    required this.databaseRepository,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
+        RepositoryProvider.value(value: databaseRepository),
         RepositoryProvider<PermissionsRepository>(
           create: (context) => PermissionsRepository(),
         ),
         RepositoryProvider<RecordingRepository>(
           create: (context) => RecordingRepository(),
         ),
-        // TODO: Add DatabaseRepository here
       ],
       child: MultiBlocProvider(
         providers: [
@@ -38,7 +45,11 @@ class FieldNoteApp extends StatelessWidget {
               recordingRepository: context.read<RecordingRepository>(),
             ),
           ),
-          // TODO: Add NotesBloc here
+          BlocProvider<NotesBloc>(
+            create: (context) => NotesBloc(
+              databaseRepository: context.read<DatabaseRepository>(),
+            )..add(LoadNotes()), // Load notes when the app starts
+          ),
         ],
         child: MaterialApp(
           title: 'FieldNote',

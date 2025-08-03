@@ -1,3 +1,5 @@
+import 'package:fieldnote/core/models/note.dart'; // Import Note model
+import 'package:fieldnote/features/home/bloc/notes_bloc/notes_bloc.dart'; // Import NotesBloc
 import 'package:fieldnote/features/home/bloc/recording_bloc/recording_bloc.dart';
 import 'package:fieldnote/shared/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +11,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Check permissions when the screen is first built
-    context.read<RecordingBloc>().add(CheckPermissions());
+    context.read<RecordingBloc>().add(InitializeRecording());
 
     return Scaffold(
       body: SafeArea(
@@ -39,6 +41,17 @@ class HomeScreen extends StatelessWidget {
     return BlocListener<RecordingBloc, RecordingState>(
       listener: (context, state) {
         if (state is RecordingSuccess) {
+          // Create a new Note object
+          final newNote = Note()
+            ..audioFilePath = state.result.filePath
+            ..transcription =
+                state.result.transcription // Use the transcription
+            ..createdAt = DateTime.now()
+            ..durationInSeconds = 0; // TODO: Calculate actual duration
+
+          // Add the new note to the database via the NotesBloc
+          context.read<NotesBloc>().add(AddNote(newNote));
+
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
@@ -62,14 +75,18 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 32.0, top: 16.0),
         child: BlocBuilder<RecordingBloc, RecordingState>(
           builder: (context, state) {
-            if (state is PermissionInitial) {
+            if (state is RecordingInitial) {
               return const CircularProgressIndicator();
             }
-            if (state is PermissionFailure) {
+            if (state is RecordingPermissionFailure ||
+                state is RecordingFailure) {
+              final String message = state is RecordingPermissionFailure
+                  ? state.errorMessage
+                  : (state as RecordingFailure).errorMessage;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
-                  state.errorMessage,
+                  message,
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: AppColors.destructiveRed),
                 ),
@@ -81,7 +98,7 @@ class HomeScreen extends StatelessWidget {
                 onTap: () => context.read<RecordingBloc>().add(StopRecording()),
               );
             }
-            // Default state: PermissionGranted or after a recording is finished.
+            // Default state: RecordingReady or after a recording is finished.
             return _RecordButton(
               isRecording: false,
               onTap: () => context.read<RecordingBloc>().add(StartRecording()),

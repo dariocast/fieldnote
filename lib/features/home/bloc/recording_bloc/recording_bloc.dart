@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:fieldnote/core/repositories/permissions_repository.dart';
 import 'package:fieldnote/core/repositories/recording_repository.dart';
@@ -16,29 +16,33 @@ class RecordingBloc extends Bloc<RecordingEvent, RecordingState> {
     required RecordingRepository recordingRepository,
   })  : _permissionsRepository = permissionsRepository,
         _recordingRepository = recordingRepository,
-        super(PermissionInitial()) {
-    on<CheckPermissions>(_onCheckPermissions);
+        super(RecordingInitial()) {
+    on<InitializeRecording>(_onInitializeRecording);
     on<StartRecording>(_onStartRecording);
     on<StopRecording>(_onStopRecording);
   }
 
-  Future<void> _onCheckPermissions(
-    CheckPermissions event,
+  Future<void> _onInitializeRecording(
+    InitializeRecording event,
     Emitter<RecordingState> emit,
   ) async {
-    // ... (code from previous task, unchanged)
     try {
       final bool hasPermissions =
           await _permissionsRepository.requestRequiredPermissions();
-      if (hasPermissions) {
-        emit(PermissionGranted());
+      if (!hasPermissions) {
+        emit(const RecordingPermissionFailure(
+            'Microphone and speech recognition permissions are required.'));
+        return;
+      }
+      final bool isInitialized = await _recordingRepository.initialize();
+      if (isInitialized) {
+        emit(RecordingReady());
       } else {
-        emit(const PermissionFailure(
-            'Microphone and speech recognition permissions are required to use this app. Please grant them in your device settings.'));
+        emit(const RecordingFailure('Failed to initialize speech recognizer.'));
       }
     } catch (e) {
-      emit(const PermissionFailure(
-          'An unexpected error occurred while checking permissions.'));
+      emit(const RecordingFailure(
+          'An unexpected error occurred during initialization.'));
     }
   }
 
@@ -59,11 +63,11 @@ class RecordingBloc extends Bloc<RecordingEvent, RecordingState> {
     Emitter<RecordingState> emit,
   ) async {
     try {
-      final String? path = await _recordingRepository.stopRecording();
-      if (path != null) {
-        emit(RecordingSuccess(path));
-        // After success, transition back to the ready state
-        emit(PermissionGranted());
+      final RecordingResult? result =
+          await _recordingRepository.stopRecording();
+      if (result != null) {
+        emit(RecordingSuccess(result));
+        emit(RecordingReady()); // Transition back to ready state
       } else {
         emit(const RecordingFailure('No recording was in progress.'));
       }
